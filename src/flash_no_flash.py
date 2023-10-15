@@ -70,15 +70,14 @@ def detail_transfer(I, F):
     ISO_F = 100
     tau_shad = 0.001
     
-    # I = read_tif('../data/my_captures/DSC_0057.jpg')/255.0
-    # F = read_tif('../data/my_captures/DSC_0056.jpg')/255.0
-    # I = read_tif('../data/lamp/lamp_ambient.tif')/255.0
-    # F = read_tif('../data/lamp/lamp_flash.tif')/255.0
-    #I = I[::4, ::4, :]
-    #F = F[::4, ::4, :]
+    
+    #Bilateral filtering on ambient image
     A_base = piecewise_bilateral_filter(I, I, sigma_s=32, sigma_r=0.05)
+    #Joint biltateral filtering
     A_nr = piecewise_bilateral_filter(I, F, sigma_s=2, sigma_r=0.05)
+    #Biltaeral filtering on flash image
     F_base = piecewise_bilateral_filter(F, F, sigma_s=2, sigma_r=0.05)
+    #Detail trasnfer
     A_detail = A_nr * ((F + 0.02)/(F_base + 0.02))
     
     
@@ -89,12 +88,14 @@ def detail_transfer(I, F):
     Y_F = 0.2126 * F_lin[:, :, 0] + 0.7152 * F_lin[:, :, 1] + 0.0722 * F_lin[:, :, 2]
     Y_A = 0.2126 * A_lin[:, :, 0] + 0.7152 * A_lin[:, :, 1] + 0.0722 * A_lin[:, :, 2]
     
+    #Shadow mask
     mask_shad = np.where((Y_F - Y_A) <= tau_shad, 1, 0)
     mask_shad = binary_erosion(mask_shad)
     mask_shad = binary_fill_holes(mask_shad)
     mask_shad = binary_dilation(mask_shad)
     mask_shad = mask_shad.reshape((mask_shad.shape[0], mask_shad.shape[1], 1))
     
+    #Specularity mask
     mask_spec = np.where(Y_F < 0.95, 0, 1)
     mask_spec = binary_erosion(mask_spec)
     mask_spec = binary_fill_holes(mask_spec)
@@ -104,6 +105,7 @@ def detail_transfer(I, F):
     M = np.logical_or(mask_shad, mask_spec)
     M = np.clip(np.sum(M, axis = 2), a_min=0, a_max=1)
     M = np.reshape(M, (M.shape[0], M.shape[1], 1))
+    #Final image with detail transfer and mask applied
     A_Final = (1 - M) * A_detail + M * A_base
     
     del mask_shad, mask_spec, M, F_lin, A_lin

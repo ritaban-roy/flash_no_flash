@@ -193,16 +193,12 @@ def read_png(img_path):
     return raw_data
 
 def main():
-    img = read_png('../data/museum/museum_ambient.png')/255.0
-    img = img[:, :, :-1]
-    dg = divergence(img[:, :, 2])
-    lg = laplacian(img[:, :, 2])
-    print(np.max(dg[1:-1, 1:-1] - lg[1:-1, 1:-1]))
-    plt.imshow(dg[1:-1, 1:-1] - lg[1:-1, 1:-1], cmap='gray')
-    plt.show()
-    
-if __name__ == '__main__':
-    #grad_field_integration()
+    '''
+    choose from fused_grad_field() ; remove_reflection()
+    '''
     #fused_grad_field()
     remove_reflection()
+    
+if __name__ == '__main__':
+    main()
     
